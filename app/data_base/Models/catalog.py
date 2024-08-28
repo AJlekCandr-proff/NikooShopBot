@@ -37,7 +37,7 @@ class BrawlStars(ProductItems):
 
 
 # Класс таблицы игр в Steam.
-class GamesSteam(Base):
+class GamesSteam(ProductItems):
     """Таблица каталога. Игры в магазине приложений Steam.
     Игры/приложения для покупки в Steam. """
 
