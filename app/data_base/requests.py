@@ -32,7 +32,7 @@ class Requests:
         async with self._session:
             table = self.__tables.get(table)
 
-            query = select([column(name) for name in columns_name]).select_from(table)
+            query = select(*[column(name) for name in columns_name]).select_from(table)
             result = await self._session.execute(query)
 
             result = result.fetchall()

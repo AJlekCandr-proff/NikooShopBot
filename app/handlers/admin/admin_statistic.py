@@ -18,7 +18,10 @@ async def statistic(callback: CallbackQuery) -> None:
     Присылает данные профиля пользователей в боте (Telegram ID, полное имя пользователя и баланс)
     для администратора списком.\n\n """
 
-    users: list[tuple[int, str, float]] = await MyRequests.get_columns(table='Users', columns_name=['user_id', 'name', 'balance'])
+    users: list[tuple[int, str, float]] = await MyRequests.get_columns(
+        table='Users',
+        columns_name=['user_id', 'name', 'balance']
+    )
     count_users = len(users)
     text: str = '\n'.join(f'🆔 <code>{users[0]}</code> | 👤 <a href="user?id={users[0]}">{users[1]}</a> | 💰 {users[2]}' for users in users)
 
