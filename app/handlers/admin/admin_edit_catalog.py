@@ -36,7 +36,7 @@ async def edit_catalog(callback: CallbackQuery, state: FSMContext) -> None:
 
     await callback.message.delete()
 
-    categories = await MyRequests.get_columns(table='Category', *['id', 'title_game'])
+    categories = await MyRequests.get_columns(table='Category', columns_name=['id', 'title_game'])
 
     category_kb = InlineKeyBoard(
         *[
@@ -70,7 +70,7 @@ async def send_catalog_game(callback: CallbackQuery, state: FSMContext) -> None:
 
     game_id = callback.data.split('_')[1]
     game = await MyRequests.get_line(table='Category', column_name='id', value=game_id)
-    products = await MyRequests.get_columns(table=game.title_game, *['id', 'Count', 'Product', 'Price'])
+    products = await MyRequests.get_columns(table=game.title_game, columns_name=['id', 'Count', 'Product', 'Price'])
 
     await state.update_data(game=game.title_game, id=game_id)
 

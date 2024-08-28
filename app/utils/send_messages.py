@@ -1,4 +1,3 @@
-# Импорт необходимых модулей.
 from aiogram.types import Message
 from aiogram.exceptions import TelegramForbiddenError
 
@@ -6,7 +5,6 @@ from ..bot_settings import bot, logger
 from ..data_base.requests import MyRequests
 
 
-# Асинхронная функция отправки рассылки.
 async def send_messages(ids: list[int], text: str, message: Message, type_message: str) -> None:
     """Асинхронная функция для отправки рассылки пользователям.\n
     В качестве аргументов принимает в себя список ID пользователей для рассылки,

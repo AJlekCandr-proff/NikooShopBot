@@ -30,7 +30,7 @@ async def send_promo_codes(callback: CallbackQuery) -> None:
 
     await callback.message.delete()
 
-    promo_codes = await MyRequests.get_columns(table='PromoCode', *['code', 'gift_sum', 'limit'])
+    promo_codes = await MyRequests.get_columns(table='PromoCode', columns_name=['code', 'gift_sum', 'limit'])
     text = '\n'.join([f' 🎁 <code>{promo_codes[0]}</code> - <b>{promo_codes[1]} ₽</b> | Осталось штук: <b>{promo_codes[2]}</b> 🔑' for promo_codes in promo_codes])
 
     await callback.message.answer(
@@ -89,7 +89,7 @@ async def delete_promo_code(callback: CallbackQuery, state: FSMContext) -> None:
     Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
     Присылает список всех промокодов и отрывает состояние FSM для выбора промокода "choice_promo".\n\n """
 
-    promo_codes = await MyRequests.get_columns(table='PromoCode', *['code', 'id'])
+    promo_codes = await MyRequests.get_columns(table='PromoCode', columns_name=['code', 'id'])
 
     promo_code_kb = InlineKeyBoard(
         *[

@@ -25,14 +25,14 @@ class Requests:
             Integer: int
         }
 
-    async def get_columns(self, table: str, *columns_name: str) -> list[tuple] | None:
+    async def get_columns(self, table: str, columns_name: list[str]) -> list[tuple] | None:
         """Возвращает список кортежей с данных указанных столбцов из указанной таблицы, либо None.
         Метод асинхронный. """
 
         async with self._session:
             table = self.__tables.get(table)
 
-            query = select(*[column(name) for name in columns_name]).select_from(table)
+            query = select([column(name) for name in columns_name]).select_from(table)
             result = await self._session.execute(query)
 
             result = result.fetchall()

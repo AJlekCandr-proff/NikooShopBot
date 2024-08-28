@@ -33,7 +33,7 @@ async def category(callback: CallbackQuery, state: FSMContext) -> None:
 
     await callback.message.delete()
 
-    categories = await MyRequests.get_columns(table='Category', *['id', 'title_game'])
+    categories = await MyRequests.get_columns(table='Category', columns_name=['id', 'title_game'])
 
     category_kb = InlineKeyBoard(
         *[
@@ -67,7 +67,7 @@ async def send_catalog_game(callback: CallbackQuery, state: FSMContext) -> None:
 
     game = await MyRequests.get_line(table='Category', column_name='id', value=callback.data.split('_')[1])
 
-    products: list[tuple] = await MyRequests.get_columns(table=f'{game.title_game}', *['id', 'Count', 'Product', 'Price'])
+    products: list[tuple] = await MyRequests.get_columns(table=f'{game.title_game}', columns_name=['id', 'Count', 'Product', 'Price'])
 
     product_kb = InlineKeyBoard(
         *[
