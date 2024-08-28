@@ -179,7 +179,7 @@ async def add_item_into_db(message: Message, state: FSMContext) -> None:
             title: str = parts[0]
             count = int(parts[1])
             price = float(parts[2])
-            game = data.get(__key='game')
+            game = data['game']
 
             await MyRequests.add_items(
                 table=game,
