@@ -1,9 +1,7 @@
-# Импорт необходимых модулей.
 import re
 
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, BufferedInputFile, Message
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from app.views import msg_choice_game, msg_format_product, msg_error_format_product, msg_error_format_text_product
@@ -11,28 +9,21 @@ from app.bot_settings import bot
 from app.data_base.requests import MyRequests
 from .admin_panel import cmd_admin
 from app.keyboards.inline_markup import InlineKeyBoard
+from ...utils.states_form import StatesAdmin
 
 
-# Инициализация роутера.
 router = Router(name=__name__)
 
 
-# Состояния FSM.
-class StatesAdmin(StatesGroup):
-    """Хранит в себе состояния FSM для панели управления. """
-
-    choice_game = State()
-    choice_action = State()
-    select_item = State()
-    get_item = State()
-
-
-# Обработчик нажатия кнопки "Управление каталогом 🛍️".
 @router.callback_query(F.data == 'edit_catalog')
 async def edit_catalog(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Управление каталогом 🛍️".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Отправляет меню для выбора игры и дальнейшего редактирования ее каталога.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Управление каталогом 🛍️".
+    Отправляет меню для выбора игры и дальнейшего редактирования ее каталога.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
@@ -46,6 +37,7 @@ async def edit_catalog(callback: CallbackQuery, state: FSMContext) -> None:
              ('В панель 🏠', 'panel'),
          ],
     )
+
     await callback.message.answer_photo(
         photo=BufferedInputFile(
             file=open('app/media/Base/catalog.png', 'rb').read(),
@@ -58,13 +50,16 @@ async def edit_catalog(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(state=StatesAdmin.choice_game)
 
 
-# Обработчик выбора игры.
 @router.callback_query(StatesAdmin.choice_game)
 async def send_catalog_game(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик выбора игры для редактирования ее каталога.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик выбора игры для редактирования ее каталога.
     Присылает каталог товаров и действий с ним выбранной игры администратором,
-    открывает состояние FSM 'choice_action' для выбора действия.\n\n """
+    открывает состояние FSM 'choice_action' для выбора действия.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
@@ -100,16 +95,19 @@ async def send_catalog_game(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(state=StatesAdmin.choice_action)
 
 
-# Обработчик нажатия кнопки "🗑 Удалить элемент".
 @router.callback_query(StatesAdmin.choice_action, F.data == 'delete_item')
 async def selected_item(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "🗑 Удалить элемент".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Присылает каталог товаров для выбора товара для удаления.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "🗑 Удалить элемент".
+    Присылает каталог товаров для выбора товара для удаления.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     data = await state.get_data()
-    game = data.get(__key='game')
-    products = await MyRequests.get_columns(table=game, *['id', 'Count', 'Product', 'Price'])
+    game = data['game']
+    products = await MyRequests.get_columns(table=game, columns_name=['id', 'Count', 'Product', 'Price'])
 
     products_kb = InlineKeyBoard(
         *[
@@ -129,15 +127,18 @@ async def selected_item(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(state=StatesAdmin.select_item)
 
 
-# Обработчик выбора элемента для удаления из каталога выбранной игры.
 @router.callback_query(StatesAdmin.select_item)
 async def delete_item(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик выбора элемента для удаления.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Удаляет выбранный администратором элемент каталога и переносит на выбор игры. """
+    """
+    Асинхронный обработчик выбора элемента для удаления.
+    Удаляет выбранный администратором элемент каталога и переносит на выбор игры.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     data = await state.get_data()
-    game = data.get(__key='game')
+    game = data['game']
     product_id = int(callback.data)
 
     await MyRequests.delete_items(table=game, column_name='id', value=product_id)
@@ -147,12 +148,15 @@ async def delete_item(callback: CallbackQuery, state: FSMContext) -> None:
     await send_catalog_game(callback=callback, state=state)
 
 
-# Обработчик нажатия кнопки "➕ Добавить элемент".
 @router.callback_query(F.data == 'add_item', StatesAdmin.choice_action)
 async def get_info_item(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "➕ Добавить элемент".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Открывает состояние FSM "get_item" и запрашивает информацию о новом товаре в нужном формате.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "➕ Добавить элемент".
+    Открывает состояние FSM "get_item" и запрашивает информацию о новом товаре в нужном формате.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
@@ -161,14 +165,17 @@ async def get_info_item(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(state=StatesAdmin.get_item)
 
 
-# Обработчик ввода информации о товаре.
 @router.message(StatesAdmin.get_item, F.photo)
 async def add_item_into_db(message: Message, state: FSMContext) -> None:
-    """Асинхронный обработчик ввода информации о новом товаре.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик ввода информации о новом товаре.
     Проверяет введенную информацию на валидность формата,
     при прохождении проверки добавляет элемент в каталог и переносит в панель администратора, очищает состояние FSM.
-    В противном случае, при неверном формате, запрашивает снова информацию о товаре снова.\n\n """
+    В противном случае, при неверном формате, запрашивает снова информацию о товаре снова.
+
+    :param message: Объект класса Message.
+    :param state: Объект класса FSMContext.
+    """
 
     if message.caption:
         data = await state.get_data()
@@ -185,13 +192,13 @@ async def add_item_into_db(message: Message, state: FSMContext) -> None:
                 table=game,
                 Product=title,
                 Count=count,
-                Category=data.get('id'),
+                Category=data['id'],
                 Price=price
             )
 
             product = await MyRequests.get_line(table=game, column_name='Product', value=title)
 
-            await bot.download(message.photo[-1].file_id, f'app/media/{data.get("game")}/Product_{product.id}.png')
+            await bot.download(message.photo[-1].file_id, f'app/media/{data['game']}/Product_{product.id}.png')
 
             await message.answer(text='✅ Элемент успешно добавлен 📝')
 

@@ -1,4 +1,3 @@
-# Импорт необходимых модулей.
 from typing import Any
 
 from sqlalchemy import select, column, insert, update, Text, Integer, delete
@@ -8,26 +7,27 @@ from .Models.catalog import *
 from app.bot_settings import session_maker
 
 
-# Класс для запросов к базе данных.
 class Requests:
-    """Класс для запросов к базе данных.
-    Для корректной работы, при создании объекта класса
-    необходимо указать ВСЕ таблицы в используемой базе данных.
-    Все методы преимущественно асинхронные. """
+    def __init__(self, tables: dict[str, Any]) -> None:
+        """
+        Класс для запросов к базе данных.
+        Все методы преимущественно асинхронные.
 
-    def __init__(self, *args: tuple[str, Any]) -> None:
+        :param tables: Передаваемые словарем классы моделей таблиц и ключ для обращения к ним.
+        """
+
         self._session = session_maker()
-        self.__tables = dict(args)
-        self._type_map = {
-            Text: str,
-            Float: float,
-            BigInteger: int,
-            Integer: int
-        }
+        self.__tables = tables
+        self._type_map = {Text: str, Float: float, BigInteger: int, Integer: int}
 
     async def get_columns(self, table: str, columns_name: list[str]) -> list[tuple] | None:
-        """Возвращает список кортежей с данных указанных столбцов из указанной таблицы, либо None.
-        Метод асинхронный. """
+        """
+        Асинхронный метод для работы с базой данных. Извлекает данные из указанных столбцов.
+
+        :param table: Название таблицы.
+        :param columns_name: Список названий столбцов.
+        :return: Список с кортежами данных из указанных столбцов.
+        """
 
         async with self._session:
             table = self.__tables.get(table)
@@ -39,10 +39,16 @@ class Requests:
 
             return result
 
-    async def get_line(self, table: str, column_name: str, value: Any) -> Any | None:
-        """Возвращает строку с данным из указанной таблицы.
-        Данные возвращаются в виде класса таблицы, либо None.
-        Метод асинхронный. """
+    async def get_line(self, table: str, column_name: str, value: any) -> Any | None:
+        """
+        Асинхронный метод для работы с базой данных.
+        Извлекает данные из строки по значению в указанном столбце.
+
+        :param table: Название таблицы.
+        :param column_name: Название столбца.
+        :param value: Значение в указанном столбце.
+        :return: Объект класса таблицы.
+        """
 
         async with self._session:
             table = self.__tables.get(table)
@@ -52,14 +58,16 @@ class Requests:
 
             result = result.fetchone()
 
-            if result is not None:
-                return result[0]
-            else:
-                return None
+            return result[0] if result is not None else None
 
-    async def add_items(self, table: str, **kwargs: dict) -> None:
-        """Добавляет данные в указанную таблицу.
-        Метод асинхронный. """
+    async def add_items(self, table: str, **data: dict[str, any]) -> None:
+        """
+        Асинхронный метод для работы с базой данных.
+        Добавляет данные в указанную таблицу и подставляет значения по умолчанию.
+
+        :param table: Название таблицы.
+        :param data: Словарь с данными для ставки.
+        """
 
         async with self._session:
             default = {}
@@ -68,28 +76,29 @@ class Requests:
             column_default = [
                 (column_name.name, column_name.default.arg, column_name.type) for column_name in table_columns if column_name.default is not None
             ]
-            specified_args = list(kwargs.keys())
+            specified_args = list(data.keys())
 
             for name in column_default:
                 if name[0] not in specified_args:
                     for type_class, convert_func in self._type_map.items():
                         if isinstance(name[2], type_class):
-                            try:
-                                default[name[0]] = convert_func(name[1])
-                                print(f"Преобразование {name[1]} в {convert_func.__name__}.")
-                            except ValueError:
-                                print(f"Ошибка преобразования {name[1]} в {convert_func.__name__}.")
-
-            combined_values = {**default, **kwargs}
+                            default[name[0]] = convert_func(name[1])
+            combined_values = {**default, **data}
 
             query = insert(table).values(**combined_values).prefix_with('OR IGNORE')
             await self._session.execute(query)
 
             await self._session.commit()
 
-    async def delete_items(self, table: str, column_name: str, value: Any) -> None:
-        """Удаляет строку из указанной таблицы.
-        Метод асинхронный. """
+    async def delete_items(self, table: str, column_name: str, value: any) -> None:
+        """
+        Асинхронный метод для работы с базой данных.
+        Удаляет строку из указанной таблицы.
+
+        :param table: Название таблицы.
+        :param column_name: Название столбца.
+        :param value: Значение в указанном столбце.
+        """
 
         async with self._session:
             table = self.__tables.get(table)
@@ -99,26 +108,32 @@ class Requests:
 
             await self._session.commit()
 
-    async def update_items(self, table: str, column_name: str, value: Any, **kwargs: dict) -> None:
-        """Обновляет данные в указанном строке и в таблице.
-        Метод асинхронный. """
+    async def update_items(self, table: str, column_name: str, value: any, **data: dict[str, any]) -> None:
+        """
+        Асинхронный метод для работы с базой данных.
+        Обновляет данные в таблице в указанной строке.
+
+        :param table: Название таблицы.
+        :param column_name: Название столбца.
+        :param value: Значение в указанном столбце.
+        :param data: Словарь с обновленными данными для вставки.
+        """
 
         async with self._session:
             table = self.__tables.get(table)
 
-            query = update(table).where(column(column_name) == value).values(kwargs)
+            query = update(table).where(column(column_name) == value).values(data)
             await self._session.execute(query)
 
             await self._session.commit()
 
 
-# Создание объекта класса Requests.
 MyRequests = Requests(
-    *[
-        ('Category', Category),
-        ('Brawl Stars', BrawlStars),
-        ('Users', Users),
-        ('PromoCode', PromoCode),
-        ('Игры в Steam', GamesSteam),
-    ],
+    {
+        'Category': Category,
+        'Brawl Stars': BrawlStars,
+        'Users': Users,
+        'PromoCode': PromoCode,
+        'Игры в Steam': GamesSteam,
+    },
 )

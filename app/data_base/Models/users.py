@@ -5,7 +5,7 @@ from app.data_base.Models.base import Base
 
 
 class Users(Base):
-    """Таблица с данными профилей пользователей. """
+    """Класс модели таблицы с данными профилей пользователей. """
 
     __tablename__ = 'Users'
 

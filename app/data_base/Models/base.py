@@ -1,10 +1,8 @@
-# Импорт необходимых модулей.
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-# Класс базы данных.
 class Base(DeclarativeBase):
-    """Класс базы данных."""
+    """Класс модели базы данных. """
 
     __abstract__ = True
 

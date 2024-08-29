@@ -2,36 +2,31 @@ import re
 
 from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
+from app.utils.states_form import StatesAdmin
 from app.views import msg_format_promo, msg_error_format_promo
 from app.data_base.requests import MyRequests
 from app.handlers.admin.admin_panel import cmd_admin
 from app.keyboards.inline_markup import EditPromoKb, InlineKeyBoard
 
 
-# Инициализация роутера.
 router = Router(name=__name__)
 
 
-# Состояния FSM.
-class States(StatesGroup):
-    get_promo = State()
-    choice_promo = State()
-
-
-# Обработчик нажатия кнопки "Промокоды 🎁".
 @router.callback_query(F.data == 'get_promo_codes')
 async def send_promo_codes(callback: CallbackQuery) -> None:
-    """Асинхронный обработчик нажатия кнопки "Промокоды 🎁".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery.\n
-    Отправляет список промо-кодов и действий с ним.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Промокоды 🎁".
+    Отправляет список промо-кодов и действий с ним.
+
+    :param callback: Объект класса CallbackQuery.
+    """
 
     await callback.message.delete()
 
     promo_codes = await MyRequests.get_columns(table='PromoCode', columns_name=['code', 'gift_sum', 'limit'])
-    text = '\n'.join([f' 🎁 <code>{promo_codes[0]}</code> - <b>{promo_codes[1]} ₽</b> | Осталось штук: <b>{promo_codes[2]}</b> 🔑' for promo_codes in promo_codes])
+    text = '\n'.join([f'🎁 <code>{promo_codes[0]}</code> - <b>{promo_codes[1]} ₽</b> | Осталось штук: <b>{promo_codes[2]}</b> 🔑' for promo_codes in promo_codes])
 
     await callback.message.answer(
         text='🔑 Все действующие промо-коды 🎁 \n\n'
@@ -40,28 +35,35 @@ async def send_promo_codes(callback: CallbackQuery) -> None:
     )
 
 
-# Обработчик кнопки "Добавить промокод 🎁".
 @router.callback_query(F.data == 'add_promo')
 async def add_promo_code(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Добавить промокод 🎁".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Запрашивает новый промокод в определенном формате.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Добавить промокод 🎁".
+    Запрашивает новый промокод в определенном формате.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
     await callback.message.answer(text=msg_format_promo())
 
-    await state.set_state(state=States.get_promo)
+    await state.set_state(state=StatesAdmin.get_promo)
 
 
 # Обработчик ввода нового промо-кода.
-@router.message(States.get_promo, F.text)
+@router.message(StatesAdmin.get_promo, F.text)
 async def add_promo_code_into_db(message: Message, state: FSMContext) -> None:
-    """Асинхронный обработчик ввода нового промо-кода.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик ввода нового промо-кода.
     Проверяет формат введенного промокода и при корректности его - добавляет в базу данных и
     переносит в панель администратора, иначе
-    при неверном формате - запрашивает снова.\n\n """
+    при неверном формате - запрашивает снова.
+
+    :param message: Объект класса Message.
+    :param state: Объект класса FSMContext.
+    """
 
     if re.fullmatch(r'^[\w+]+\s-+\s+\d+\s-+\s+\d+$', message.text):
         code = message.text.split()[0]
@@ -79,15 +81,18 @@ async def add_promo_code_into_db(message: Message, state: FSMContext) -> None:
     else:
         await message.answer(text=msg_error_format_promo())
 
-        await state.set_state(state=States.get_promo)
+        await state.set_state(state=StatesAdmin.get_promo)
 
 
-# Обработчик кнопки "Удалить промокод 🗑️".
 @router.callback_query(F.data == 'delete_promo')
 async def delete_promo_code(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Удалить промокод 🗑️".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Присылает список всех промокодов и отрывает состояние FSM для выбора промокода "choice_promo".\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Удалить промокод 🗑️".
+    Присылает список всех промокодов и отрывает состояние FSM для выбора промокода "choice_promo".
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     promo_codes = await MyRequests.get_columns(table='PromoCode', columns_name=['code', 'id'])
 
@@ -102,15 +107,18 @@ async def delete_promo_code(callback: CallbackQuery, state: FSMContext) -> None:
         reply_markup=promo_code_kb(rows=1),
     )
 
-    await state.set_state(state=States.choice_promo)
+    await state.set_state(state=StatesAdmin.choice_promo)
 
 
-# Обработчик выбора промокода для удаления.
-@router.callback_query(F.data.startswith('promo_'), States.choice_promo)
+@router.callback_query(F.data.startswith('promo_'), StatesAdmin.choice_promo)
 async def delete_promo_code(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик выбора промокода для удаления.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Удаляет промокод из базы данных и переносит в панель администратора.\n\n """
+    """
+    Асинхронный обработчик выбора промокода для удаления.
+    Удаляет промокод из базы данных и переносит в панель администратора.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await MyRequests.delete_items(table='PromoCode', column_name='id', value=callback.data.split('_')[1])
 

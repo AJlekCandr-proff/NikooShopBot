@@ -1,4 +1,3 @@
-# Импорт необходимых модулей.
 import re
 
 from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardBuilder, InlineKeyboardMarkup
@@ -6,8 +5,8 @@ from aiogram.utils.keyboard import InlineKeyboardButton, InlineKeyboardBuilder, 
 
 # Создание класса-конструктора inline-клавиатуры.
 class InlineKeyBoard:
-    """Класс для создания inline-клавиатур.\n
-    Кнопки и с url, и с callback_data.\n\n """
+    """Класс для создания inline-клавиатур.
+    Кнопки и с url, и с callback_data. """
 
     Inline_markup = InlineKeyboardBuilder()
 
@@ -18,8 +17,13 @@ class InlineKeyBoard:
     def __init__(self, *args: tuple[str, str]) -> None:
         self.buttons = args
 
-    def __call__(self, rows: int, *args, **kwargs) -> InlineKeyboardMarkup:
-        """Возвращает клавиатуру с inline-кнопками.\n\n """
+    def __call__(self, rows: int) -> InlineKeyboardMarkup:
+        """
+        Dunder-метод вызова класса как асинхронную функцию для создания inline-клавиатуры.
+
+        :param rows: Кол-во столбцов в inline-клавиатуре.
+        :return: Объект класса InlineKeyboardMarkup.
+        """
 
         self.Inline_markup = InlineKeyboardBuilder()
 
@@ -40,7 +44,12 @@ class InlineKeyBoard:
 
     @classmethod
     def check_url(cls, string: str) -> bool:
-        """Проверяет строку на url.\n\n """
+        """
+        Проверяет строку на url.
+
+        :param string: Проверяемая строка.
+        :return: Константа True/False.
+        """
 
         return bool(cls.__pattern.match(string))
 

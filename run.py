@@ -1,36 +1,36 @@
-# Импорт необходимых модулей.
 import asyncio
 
 from aiogram import Dispatcher, Bot
 
-from app.bot_settings import bot, logger
+from app.bot_settings import NikooShopBot, Logger
 from app import router as root_router
 from app.data_base.Engine import async_engine
 
 
-# Асинхронная функция запуска бота.
-async def main_func(main_bot: Bot) -> None:
-    """Главная асинхронная функция.\n
-    Запускает бота и обновляет базу данных.\n\n """
+async def main_func(bot: Bot) -> None:
+    """Главная асинхронная функция.
+    Запускает бота и обновляет базу данных.
+
+    :param bot: Объект класса Bot.
+    """
 
     dp = Dispatcher()
 
     dp.include_routers(root_router)
 
-    logger.info('Bot successfully started!')
+    Logger.info('Bot successfully started!')
 
     try:
         await async_engine()
-        await dp.start_polling(main_bot)
+        await dp.start_polling(bot)
 
     finally:
-        await main_bot.session.close()
+        await bot.session.close()
 
 
-# Конструкция "if __name__ == '__main__'".
 if __name__ == '__main__':
     try:
-        asyncio.run(main_func(bot))
+        asyncio.run(main_func(NikooShopBot))
 
     except KeyboardInterrupt:
-        logger.info('Bot successfully finished!')
+        Logger.info('Bot successfully finished!')

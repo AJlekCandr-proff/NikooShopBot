@@ -1,35 +1,26 @@
-# Импорт необходимых модулей.
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, BufferedInputFile, Message
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
+from app.utils.states_form import StatesUser
 from .user.user_cmd_start import cmd_start
 from ..bot_settings import bot, settings
 from ..data_base.requests import MyRequests
 from ..keyboards.inline_markup import InlineKeyBoard, MenuKb, MenuProfileKb
 
 
-# Инициализация роутера.
 router = Router(name=__name__)
 
 
-# Состояния FSM.
-class StatesCatalog(StatesGroup):
-    """Хранит в себе состояния FSM. """
-
-    choice_game = State()
-    choice_product = State()
-    buy_product = State()
-    get_email = State()
-
-
-# Обработчик нажатия кнопки "Каталог 🛍️".
 @router.callback_query(F.data == 'My_shop')
 async def category(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Каталог 🛍️".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Присылает каталог игр и открывает состояние FSM 'choice_product' для выбора товара.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Каталог 🛍️".
+    Присылает каталог игр и открывает состояние FSM 'choice_product' для выбора товара.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
@@ -53,21 +44,24 @@ async def category(callback: CallbackQuery, state: FSMContext) -> None:
         reply_markup=category_kb(rows=1),
     )
 
-    await state.set_state(state=StatesCatalog.choice_game)
+    await state.set_state(state=StatesUser.choice_game)
 
 
-# Обработчик выбора игры.
-@router.callback_query(F.data.startswith('game_'), StatesCatalog.choice_game)
+@router.callback_query(F.data.startswith('game_'), StatesUser.choice_game)
 async def send_catalog_game(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Профиль 👤".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Отправляет каталог выбранной игры и открывает состояние FSM 'choice_product' для выбора товара.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Профиль 👤".
+    Отправляет каталог выбранной игры и открывает состояние FSM 'choice_product' для выбора товара.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
     game = await MyRequests.get_line(table='Category', column_name='id', value=callback.data.split('_')[1])
 
-    products: list[tuple] = await MyRequests.get_columns(table=f'{game.title_game}', columns_name=['id', 'Count', 'Product', 'Price'])
+    products = await MyRequests.get_columns(table=f'{game.title_game}', columns_name=['id', 'Count', 'Product', 'Price'])
 
     product_kb = InlineKeyBoard(
         *[
@@ -91,19 +85,22 @@ async def send_catalog_game(callback: CallbackQuery, state: FSMContext) -> None:
     )
     await state.update_data(game=game.title_game)
 
-    await state.set_state(state=StatesCatalog.choice_product)
+    await state.set_state(state=StatesUser.choice_product)
 
 
-# Обработчик выбора товара.
-@router.callback_query(F.data.startswith('product_'), StatesCatalog.choice_product)
+@router.callback_query(F.data.startswith('product_'), StatesUser.choice_product)
 async def send_product(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик выбора товара в выбранной игре.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик выбора товара в выбранной игре.
     Присылает информацию о выбранном товаре и присылает меню для выбора действия с товаром,
-    открывает состояние FSM "buy_product".\n\n """
+    открывает состояние FSM "buy_product".
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     data = await state.get_data()
-    game = data.get(__key='game')
+    game = data['game']
     product_id = int(callback.data.split('_')[1])
 
     await callback.message.delete()
@@ -122,24 +119,26 @@ async def send_product(callback: CallbackQuery, state: FSMContext) -> None:
     )
 
     await state.update_data(price=product.Price, product=product.Product, count=product.Count)
-    await state.set_state(state=StatesCatalog.buy_product)
+    await state.set_state(state=StatesUser.buy_product)
 
 
-# Обработчик нажатия кнопки "Купить 💳".
-@router.callback_query(F.data == 'Buy', StatesCatalog.buy_product)
+@router.callback_query(F.data == 'Buy', StatesUser.buy_product)
 async def buy_product_game(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Купить 💳".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик нажатия кнопки "Купить 💳".
     Списывает деньги с баланса и запрашивает адрес электронной почты.
     В противном случае, при недостаточном балансе,
-    выводит сообщение об ошибке и предложение пополнить баланс.\n\n """
+    выводит сообщение об ошибке и предложение пополнить баланс.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
     data = await state.get_data()
-    game = data.get('game')
-    price = data.get('price')
-
+    game = data['game']
+    price = data['price']
     user = await MyRequests.get_line(table='Users', column_name='user_id', value=callback.from_user.id)
 
     if user.balance >= price:
@@ -154,7 +153,7 @@ async def buy_product_game(callback: CallbackQuery, state: FSMContext) -> None:
                  f'Ниже обязательно укажите адрес Е-mail ✉️ от вашего аккаунта(учетной записи) в {game} 👇🏻',
         )
 
-        await state.set_state(state=StatesCatalog.get_email)
+        await state.set_state(state=StatesUser.get_email)
 
     else:
         await callback.message.answer_photo(
@@ -169,21 +168,24 @@ async def buy_product_game(callback: CallbackQuery, state: FSMContext) -> None:
         )
 
 
-# Обработчик ввода e-mail пользователя.
-@router.message(StatesCatalog.get_email, F.text)
+@router.message(StatesUser.get_email, F.text)
 async def send_purchase(message: Message, state: FSMContext) -> None:
-    """Асинхронный обработчик ввода электронной почты.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик ввода электронной почты.
     Отправляет благодарное сообщение пользователю и переносит его в главное меню.
     Отправляет сообщение об успешной покупке товара администратору бота.
-    Очищается состояние FSM.\n\n """
+    Очищается состояние FSM.
+
+    :param message: Объект класса Message.
+    :param state: Объект класса FSMContext.
+    """
 
     data: dict = await state.get_data()
 
-    game = data.get(__key='game')
-    price = data.get(__key='price')
-    count = data.get(__key='count')
-    product = data.get(__key='product')
+    game = data['game']
+    price = data['price']
+    count = data['count']
+    product = data['product']
     email = message.text
     user_id = message.from_user.id
 
@@ -212,11 +214,14 @@ async def send_purchase(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
-# Обработчик нажатия кнопки "Назад 🏠".
-@router.callback_query(F.data == 'Back', StatesCatalog.buy_product)
+@router.callback_query(F.data == 'Back', StatesUser.buy_product)
 async def back_to_menu(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Назад 🏠".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Возвращает в меню с товарами выбранной игры.\n\n """
+    """
+    Асинхронный обработчик нажатия кнопки "Назад 🏠".
+    Возвращает в меню с товарами выбранной игры.
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await send_catalog_game(callback=callback, state=state)

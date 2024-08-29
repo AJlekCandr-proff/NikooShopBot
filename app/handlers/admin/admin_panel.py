@@ -1,4 +1,3 @@
-# Импорт необходимых модулей.
 from aiogram import Router
 from aiogram.types import Message, BufferedInputFile
 from aiogram.filters import Command
@@ -8,20 +7,22 @@ from app.bot_settings import settings
 from app.keyboards.inline_markup import AdminKb
 
 
-# Инициализация роутера.
 router = Router(name=__name__)
 
 
-# Обработчик команды /admin.
 @router.message(Command('admin'))
 async def cmd_admin(message: Message, user_id: int = None) -> None:
-    """Асинхронный обработчик команды "admin".\n
-    Принимает в себя в качестве аргументов объект класса Message и ID пользователя.\n
-    Отправляет приветственное сообщение администратору и открывает панель для управления.\n\n """
+    """
+    Асинхронный обработчик команды "admin".
+    Отправляет приветственное сообщение администратору и открывает панель для управления.
+
+    :param message: Объект класса Message.
+    :param user_id: ID пользователя.
+    """
 
     user_id = user_id if user_id else message.from_user.id
 
-    if user_id == int(settings.ADMIN_ID.get_secret_value()):
+    if user_id == settings.ADMIN_ID:
         await message.delete()
 
         await message.answer_photo(

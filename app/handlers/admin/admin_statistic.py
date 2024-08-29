@@ -1,4 +1,3 @@
-# Импорт необходимых модулей.
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
@@ -6,17 +5,18 @@ from app.data_base.requests import MyRequests
 from app.keyboards.inline_markup import StatisticKb
 
 
-# Инициализация роутера.
 router = Router(name=__name__)
 
 
-# Обработчик кнопки "Статистика 📊".
 @router.callback_query(F.data == 'statistic')
 async def statistic(callback: CallbackQuery) -> None:
-    """Асинхронный обработчик нажатия кнопки "Статистика 📊".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery.\n
+    """
+    Асинхронный обработчик нажатия кнопки "Статистика 📊".
     Присылает данные профиля пользователей в боте (Telegram ID, полное имя пользователя и баланс)
-    для администратора списком.\n\n """
+    для администратора списком.
+
+    :param callback: Объект класса CallbackQuery.
+    """
 
     users: list[tuple[int, str, float]] = await MyRequests.get_columns(
         table='Users',

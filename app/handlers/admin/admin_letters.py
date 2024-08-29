@@ -1,32 +1,26 @@
-# Импорт необходимых модулей.
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from .admin_panel import cmd_admin
+from app.utils.states_form import StatesAdmin
 from app.utils.send_messages import send_messages
 from app.data_base.requests import MyRequests
 
 
-# Инициализация роутера.
 router = Router(name=__name__)
 
 
-# Класс FSM.
-class States(StatesGroup):
-    """Хранит в себе состояния FSM для рассылки. """
-
-    get_message = State()
-
-
-# Обработчик нажатия кнопки "Рассылка 📣".
 @router.callback_query(F.data == 'send_letters')
 async def send_massage(callback: CallbackQuery, state: FSMContext) -> None:
-    """Асинхронный обработчик нажатия кнопки "Рассылка 📣".\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
+    """
+    Асинхронный обработчик нажатия кнопки "Рассылка 📣".
     Присылает вводное сообщение для рассылки: запрашивает сообщение
-    и открывает состояние FSM "get_message".\n\n """
+    и открывает состояние FSM "get_message".
+
+    :param callback: Объект класса CallbackQuery.
+    :param state: Объект класса FSMContext.
+    """
 
     await callback.message.delete()
 
@@ -35,18 +29,21 @@ async def send_massage(callback: CallbackQuery, state: FSMContext) -> None:
              f'напиши сообщение для рассылки ✉️',
     )
 
-    await state.set_state(state=States.get_message)
+    await state.set_state(state=StatesAdmin.get_message)
 
 
-# Обработчик ввода сообщения администратора для рассылки его пользователям.
-@router.message(States.get_message)
+@router.message(StatesAdmin.get_message)
 async def get_massage(message: Message, state: FSMContext) -> None:
-    """Асинхронный обработчик ввода сообщения для дальнейшей рассылки.\n
-    Принимает в себя в качестве аргументов объект класса CallbackQuery и FSMContext.\n
-    Отправляет сообщение-рассылку и очищает состояние FSM.\n\n """
+    """
+    Асинхронный обработчик ввода сообщения для дальнейшей рассылки.
+    Отправляет сообщение-рассылку и очищает состояние FSM.
+
+    :param message: Объект класса Message.
+    :param state: Объект класса FSMContext.
+    """
 
     if message.text or message.caption:
-        users: list[tuple[int]] = await MyRequests.get_columns('Users', *['user_id'])
+        users: list[tuple[int]] = await MyRequests.get_columns(table='Users', columns_name=['user_id'])
         users: list[int] = [user[0] for user in users]
         text: str = message.text or message.caption
 
@@ -69,4 +66,4 @@ async def get_massage(message: Message, state: FSMContext) -> None:
                  '🖊  Напиши обязательно еще и текст для рассылки ✉️',
         )
 
-        await state.set_state(state=States.get_message)
+        await state.set_state(state=StatesAdmin.get_message)
