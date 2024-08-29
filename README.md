@@ -43,6 +43,11 @@
    ```
 3. Переименовать `.env.example` в `.env` и вписать соответствующие данные:
    ```
+   TELEGRAM_API_TOKEN=
+   LAVA_API_TOKEN=
+   SHOP_ID=
+   ADMIN_ID=
+   SQLALCHEMY_URL=
 
    ```
 4. Запустить бота:
