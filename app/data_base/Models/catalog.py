@@ -12,7 +12,7 @@ class ProductItems(Base):
 
     Product: Mapped[str] = mapped_column(String(25), nullable=False)
     Price: Mapped[float] = mapped_column(Float, nullable=False)
-    Category_id: Mapped[int] = mapped_column(ForeignKey('Category.id'))
+    Category_id: Mapped["Category.id"] = mapped_column(BigInteger, ForeignKey('Category.id'))
     Count: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
 
@@ -23,9 +23,8 @@ class Category(Base):
     __tablename__ = 'Category'
 
     title_game: Mapped[int] = mapped_column(String(25), nullable=False, unique=True)
-
-    relationship(argument='BrawlStars', back_populates='Category')
-    relationship(argument='GamesSteam', back_populates='Category')
+    Brawl_Stars = relationship(argument='BrawlStars', back_populates='Category')
+    Steam = relationship(argument='GamesSteam', back_populates='Category')
 
 
 class BrawlStars(ProductItems):
@@ -34,7 +33,7 @@ class BrawlStars(ProductItems):
 
     __tablename__ = 'Brawl Stars'
 
-    Category: Mapped["Category"] = relationship(argument="Category", back_populates='Brawl Stars')
+    Category: Mapped["Category"] = relationship(argument="Category", back_populates='Brawl_Stars')
 
 
 class GamesSteam(ProductItems):
@@ -43,7 +42,7 @@ class GamesSteam(ProductItems):
 
     __tablename__ = 'Игры в Steam'
 
-    Category: Mapped["Category"] = relationship(argument="Category", back_populates='Игры в Steam')
+    Category: Mapped["Category"] = relationship(argument="Category", back_populates='Steam')
 
 
 class PromoCode(Base):

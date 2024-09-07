@@ -96,4 +96,4 @@ class LavaAPI:
             return response['data']['status'] == "success"
 
 
-API_Lava = LavaAPI(api_token=settings.TOKEN_LAVA.get_secret_value(), shop_id=settings.SHOP_ID)
+API_Lava = LavaAPI(api_token=settings.LAVA_API_TOKEN.get_secret_value(), shop_id=settings.SHOP_ID.get_secret_value())

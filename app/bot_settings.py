@@ -1,4 +1,3 @@
-# Необходимых модулей.
 from loguru import logger
 
 from pydantic import SecretStr
@@ -16,7 +15,7 @@ class Settings(BaseSettings):
 
     TELEGRAM_API_TOKEN: SecretStr
     LAVA_API_TOKEN: SecretStr
-    SHOP_ID: int
+    SHOP_ID: SecretStr
     ADMIN_ID: int
     SQLALCHEMY_URL: str
 

@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery, BufferedInputFile, Message
 from aiogram.fsm.context import FSMContext
 
 from app.views import msg_choice_game, msg_format_product, msg_error_format_product, msg_error_format_text_product
-from app.bot_settings import bot
+from app.bot_settings import NikooShopBot
 from app.data_base.requests import MyRequests
 from .admin_panel import cmd_admin
 from app.keyboards.inline_markup import InlineKeyBoard
@@ -192,13 +192,13 @@ async def add_item_into_db(message: Message, state: FSMContext) -> None:
                 table=game,
                 Product=title,
                 Count=count,
-                Category=data['id'],
+                Category_id=data['id'],
                 Price=price
             )
 
             product = await MyRequests.get_line(table=game, column_name='Product', value=title)
 
-            await bot.download(message.photo[-1].file_id, f'app/media/{data['game']}/Product_{product.id}.png')
+            await NikooShopBot.download(message.photo[-1].file_id, f'app/media/{data['game']}/Product_{product.id}.png')
 
             await message.answer(text='✅ Элемент успешно добавлен 📝')
 

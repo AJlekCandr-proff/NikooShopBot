@@ -86,6 +86,7 @@ class Requests:
             combined_values = {**default, **data}
 
             query = insert(table).values(**combined_values).prefix_with('OR IGNORE')
+
             await self._session.execute(query)
 
             await self._session.commit()

@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 
 from app.utils.states_form import StatesUser
 from .user.user_cmd_start import cmd_start
-from ..bot_settings import bot, settings
+from ..bot_settings import NikooShopBot, settings
 from ..data_base.requests import MyRequests
 from ..keyboards.inline_markup import InlineKeyBoard, MenuKb, MenuProfileKb
 
@@ -196,7 +196,7 @@ async def send_purchase(message: Message, state: FSMContext) -> None:
              f'C уважением, администрация проекта @NikoooShop 🤝🏻\n\n',
     )
 
-    await bot.send_message(
+    await NikooShopBot.send_message(
         chat_id=settings.ADMIN_ID,
         text=f'🔔 <i>Новая покупка 🛍</i>\n\n'
              f'<b>👤 Пользователь:</b> <a href="tg:user?id={user_id}">{message.from_user.full_name}</a>\n'

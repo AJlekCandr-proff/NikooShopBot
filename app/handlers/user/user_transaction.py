@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from app.utils.states_form import StatesUser
-from app.bot_settings import bot
+from app.bot_settings import NikooShopBot
 from app.data_base.requests import MyRequests
 from app.handlers.user.user_cmd_start import cmd_start
 from app.handlers.user.user_profile import send_profile
@@ -103,7 +103,7 @@ async def send_link(message: Message, state: FSMContext) -> None:
 
     payment_sum: str = message.text
 
-    await bot.delete_messages(chat_id=message.chat.id, message_ids=[message.message_id, message.message_id - 1])
+    await NikooShopBot.delete_messages(chat_id=message.chat.id, message_ids=[message.message_id, message.message_id - 1])
 
     if re.fullmatch(r'\d+', payment_sum):
         response = await API_Lava.create_invoice(amount=payment_sum)
